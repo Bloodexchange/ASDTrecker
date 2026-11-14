@@ -1,0 +1,29 @@
+{
+  "name": "asdtrecker",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "dev:cloud": "node --env-file=.env.local scripts/dev-cloud.mjs",
+    "build": "node scripts/build-web.mjs",
+    "db:migrate": "node --env-file=.env.local scripts/migrate.mjs",
+    "configure:cloud": "node scripts/configure-cloud.mjs",
+    "test": "node --test tests/core.test.mjs tests/fx.test.mjs",
+    "build:android": "node scripts/build-android.mjs",
+    "test:ui": "node tests/ui.mjs",
+    "test:cloud": "node --env-file=.env.local --test tests/cloud.test.mjs",
+    "test:cloud-ui": "node --env-file=.env.local tests/cloud-ui.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1"
+  },
+  "dependencies": {
+    "better-auth": "^1.7.24",
+    "express": "^5.3.0",
+    "pg": "^8.23.1"
+  }
+}

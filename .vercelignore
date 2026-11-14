@@ -1,0 +1,8 @@
+android
+releases
+artifacts
+tests
+.env*
+.cloud
+.git
+node_modules

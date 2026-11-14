@@ -1,0 +1,6 @@
+import fs from 'node:fs';import {spawnSync} from 'node:child_process';import {parseEnv} from 'node:util';
+const git=process.env.GIT_PATH||'git';
+const r=spawnSync(git,['ls-files','-z'],{encoding:'utf8'});if(r.status!==0)throw Error('git ls-files failed');const files=r.stdout.split('\0').filter(Boolean);
+const secrets=[];if(fs.existsSync('.env.local'))for(const [key,value]of Object.entries(parseEnv(fs.readFileSync('.env.local','utf8'))))if(/SECRET|PASSWORD|DATABASE_URL|POSTGRES_URL|ENCRYPTION_KEY|OIDC_TOKEN/.test(key)&&value.length>12)secrets.push(value);
+const failures=[];for(const file of files){if(/(^|\/)(\.cloud|\.vercel|node_modules|artifacts|releases)(\/|$)|\.jks$|\.keystore$|^\.env(?!\.example$)/.test(file)){failures.push(file+': private path');continue;}const text=fs.readFileSync(file,'utf8');if(secrets.some(s=>text.includes(s)))failures.push(file+': contains a configured secret');if(/-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|postgres(?:ql)?:\/\/[^\s"']+:[^\s"']+@|gh[pousr]_[A-Za-z0-9]{30,}/.test(text))failures.push(file+': credential pattern');}
+if(failures.length){console.error(failures.join('\n'));process.exit(1);}console.log(`Public-source check passed: ${files.length} tracked files; no private paths or configured secret values.`);

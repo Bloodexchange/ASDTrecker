@@ -4,7 +4,7 @@ import {validateState} from '../web/core.js';
 export function createApp({auth,repository,config,staticDir,rates}){
  const app=express();app.disable('x-powered-by');
  app.use((req,res,next)=>{res.set('X-Content-Type-Options','nosniff');res.set('Referrer-Policy','same-origin');res.set('X-Frame-Options','DENY');if(req.path.startsWith('/api/'))res.set('Cache-Control','no-store, private');next();});
- app.get('/api/health',(_req,res)=>res.json({status:'ok',version:'1.2.1',storage:'Neon Postgres'}));
+ app.get('/api/health',(_req,res)=>res.json({status:'ok',version:'1.2.2',storage:'Neon Postgres'}));
  app.get('/api/rates',async(_req,res,next)=>{try{if(!rates)return res.status(503).json({error:'RATES_UNAVAILABLE'});res.json(await rates());}catch(e){next(e);}});
  // Auth owns the request body and performs its own CSRF/origin checks.
  app.all('/api/auth/{*path}',toNodeHandler(auth));

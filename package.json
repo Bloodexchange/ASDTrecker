@@ -1,6 +1,6 @@
 {
   "name": "asdtrecker",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -12,11 +12,15 @@
     "build": "node scripts/build-web.mjs",
     "db:migrate": "node --env-file=.env.local scripts/migrate.mjs",
     "configure:cloud": "node scripts/configure-cloud.mjs",
-    "test": "node --test tests/core.test.mjs tests/fx.test.mjs",
+    "test": "node --test tests/core.test.mjs tests/fx.test.mjs tests/money-input.test.mjs",
     "build:android": "node scripts/build-android.mjs",
     "test:ui": "node tests/ui.mjs",
     "test:cloud": "node --env-file=.env.local --test tests/cloud.test.mjs",
-    "test:cloud-ui": "node --env-file=.env.local tests/cloud-ui.mjs"
+    "test:cloud-ui": "node --env-file=.env.local tests/cloud-ui.mjs",
+    "configure:rates": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/configure-rates.ps1",
+    "test:rates": "node --env-file=.env.local --test tests/rates-service.test.mjs",
+    "test:fx-ui": "node tests/fx-ui.mjs",
+    "test:converter-ui": "node tests/converter-ui.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1"

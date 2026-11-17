@@ -98,8 +98,8 @@ public final class MainActivity extends Activity {
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
                 // Attribution opens externally; never expose the bridge to remote content.
-                if (request.isForMainFrame() && request.hasGesture() && "https".equals(uri.getScheme()) && ("www.exchangerate-api.com".equals(uri.getHost())||"cbu.uz".equals(uri.getHost()))) {
-                    try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("cbu.uz".equals(uri.getHost())?"https://cbu.uz/ru/arkhiv-kursov-valyut/":"https://www.exchangerate-api.com"))); } catch (Exception ignored) { }
+                if (request.isForMainFrame() && request.hasGesture() && "https".equals(uri.getScheme()) && ("www.exchangerate-api.com".equals(uri.getHost())||"currencyapi.com".equals(uri.getHost())||"cbu.uz".equals(uri.getHost()))) {
+                    try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("cbu.uz".equals(uri.getHost())?"https://cbu.uz/ru/arkhiv-kursov-valyut/":"currencyapi.com".equals(uri.getHost())?"https://currencyapi.com":"https://www.exchangerate-api.com"))); } catch (Exception ignored) { }
                 }
                 return true;
             }

@@ -59,6 +59,7 @@ export function validateState(s) {
   const ids=new Set();
   for(const t of s.transactions){
     if(!id(t.id)||ids.has(t.id)||!['income','expense'].includes(t.type)||!integer(t.amount)||t.amount<=0||!cur(t.currency)||!date(t.date)||!str(t.note)||!categories.some(c=>c.id===t.category&&!!c.income===(t.type==='income'))||!(t.usdValue===null||(Number.isFinite(t.usdValue)&&t.usdValue>=0&&t.usdValue<=1e14))||!integer(t.accountAmount)||t.accountAmount<0||!s.accounts.some(a=>a.id===t.account))fail(); ids.add(t.id);
+    if((t.enteredCurrency!==undefined||t.enteredAmount!==undefined)&&(!cur(t.enteredCurrency)||!integer(t.enteredAmount)||t.enteredAmount<=0))fail();
   }
   for(const b of s.budgets)if(!id(b.id)||!categories.some(c=>c.id===b.category&&!c.income)||!cur(b.currency)||!integer(b.limit)||b.limit<=0)fail();
   for(const g of s.goals)if(!id(g.id)||!str(g.name,60)||!cur(g.currency)||!integer(g.target)||g.target<=0||!integer(g.saved)||g.saved<0)fail();

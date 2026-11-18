@@ -1,0 +1,13 @@
+# Render Blueprint: New → Blueprint → pick this repo. Root directory is landing/.
+services:
+  - type: web
+    name: asdtrecker-landing
+    runtime: python
+    rootDir: landing
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT --proxy-headers
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"

@@ -51,4 +51,25 @@ public final class ReminderService extends JobService {
         return false;
     }
     @Override public boolean onStopJob(JobParameters p){return false;}
+    static final String BUDGET_CHANNEL = "budget-alerts";
+    static boolean canNotify(Context c) {
+        NotificationManager manager=(NotificationManager)c.getSystemService(NOTIFICATION_SERVICE);
+        return manager.areNotificationsEnabled()&&(Build.VERSION.SDK_INT<33||c.checkSelfPermission("android.permission.POST_NOTIFICATIONS")==PackageManager.PERMISSION_GRANTED);
+    }
+    static void budgetChannel(Context c) {
+        NotificationManager manager=(NotificationManager)c.getSystemService(NOTIFICATION_SERVICE);
+        NotificationChannel channel=new NotificationChannel(BUDGET_CHANNEL,text(c,"Бюджеты","Budjetlar","Budgets"),NotificationManager.IMPORTANCE_HIGH);
+        channel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+        manager.createNotificationChannel(channel);
+    }
+    /** Shown while the app is open (the web layer decides when a budget crosses 80% or 100%). */
+    static void budgetAlert(Context c, String id, String title, String body) {
+        if(!prefs(c).getBoolean("budgetAlerts",false)||!canNotify(c))return;
+        budgetChannel(c);
+        NotificationManager manager=(NotificationManager)c.getSystemService(NOTIFICATION_SERVICE);
+        int notificationId=20000+(id.hashCode()&0x3fff);
+        PendingIntent open=PendingIntent.getActivity(c,notificationId,new Intent(c,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP),PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+        Notification n=new Notification.Builder(c,BUDGET_CHANNEL).setSmallIcon(R.drawable.ic_launcher).setContentTitle(title).setContentText(body).setStyle(new Notification.BigTextStyle().bigText(body)).setContentIntent(open).setAutoCancel(true).setVisibility(Notification.VISIBILITY_PRIVATE).build();
+        try{manager.notify(notificationId,n);}catch(SecurityException ignored){}
+    }
 }

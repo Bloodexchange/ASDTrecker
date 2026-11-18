@@ -1,0 +1,161 @@
+{%- set icons = {
+  'chart': 'M3 3v18h18 M7 15v-4 M12 15V6 M17 15V9',
+  'target': 'M21 12a9 9 0 1 1-9-9 M17 12a5 5 0 1 1-5-5 M12 12l9-9 M17 3h4v4',
+  'wallet': 'M3 7V5a2 2 0 0 1 2-2h13v4 M3 7h18v14H3Z M16 12h5v5h-5z',
+  'shield': 'M12 3 3 7v5c0 5 9 9 9 9s9-4 9-9V7Z m-5 9 3 3 6-6',
+  'repeat': 'm17 2 4 4-4 4 M3 11V6h18 M7 22l-4-4 4-4 M21 13v5H3',
+  'globe': 'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0 M3 12h18 M12 3c5 5 5 13 0 18-5-5-5-13 0-18',
+  'download': 'M12 3v12 m-5-5 5 5 5-5 M3 16v5h18v-5',
+  'bell': 'M6 9a6 6 0 1 1 12 0c0 6 3 7 3 7H3s3-1 3-7 M10 20a2 2 0 0 0 4 0',
+  'cloud': 'M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 9a4.5 4.5 0 0 0 1 9Z',
+  'external': 'M14 4h6v6 M20 4 11 13 M18 14v6H4V6h6',
+  'phone': 'M7 2h10a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1Z M11 18h2',
+  'spark': 'm12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3Z',
+} -%}
+{%- macro icon(name) -%}<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="{{ icons[name] }}"/></svg>{%- endmacro -%}
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080b13">
+<title>{{ t.title }}</title>
+<meta name="description" content="{{ t.description }}">
+<meta property="og:title" content="{{ t.title }}">
+<meta property="og:description" content="{{ t.description }}">
+<meta property="og:type" content="website">
+<meta property="og:image" content="/static/img/desktop-overview.webp">
+<link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+<link rel="stylesheet" href="/static/site.css">
+</head>
+<body>
+<canvas id="ambient" aria-hidden="true"></canvas>
+<div class="glass-orbits" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="nav-wrap">
+  <nav class="nav glass">
+    <a class="brand" href="/?lang={{ lang }}">
+      <img src="/static/logo.svg" alt="" width="40" height="40">
+      <span>ASD<em>Trecker</em><small>{{ t.tagline }}</small></span>
+    </a>
+    <div class="nav-links">
+      <a href="#features">{{ t.nav_features }}</a>
+      <a href="#screens">{{ t.nav_screens }}</a>
+      <a href="#download">{{ t.nav_download }}</a>
+    </div>
+    <div class="nav-actions">
+      <div class="segmented" role="group" aria-label="Language">
+        {%- for code, label in langs.items() %}
+        <a href="/?lang={{ code }}" {% if code == lang %}class="selected" aria-current="true"{% endif %} hreflang="{{ code }}">{{ label }}</a>
+        {%- endfor %}
+      </div>
+      <a class="btn small primary nav-cta" href="{{ web_url }}" target="_blank" rel="noopener">{{ t.open_web }}{{ icon('external') }}</a>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <section class="hero section">
+    <div class="hero-copy reveal">
+      <div class="caption">{{ t.eyebrow }}</div>
+      <h1>{{ t.hero_title }}</h1>
+      <p class="lead">{{ t.hero_lead }}</p>
+      <div class="cta-row">
+        <a class="btn primary big" href="/download">{{ icon('download') }}{{ t.download_apk }}<span class="btn-meta">v{{ release.version }}{% if size %} · {{ size }}{% endif %}</span></a>
+        <a class="btn big" href="{{ web_url }}" target="_blank" rel="noopener">{{ icon('globe') }}{{ t.open_browser }}</a>
+      </div>
+      <div class="tags">
+        <span class="tag green">{{ icon('phone') }}{{ t.android_req }}</span>
+        <span class="tag">{{ icon('globe') }}{{ t.langs_badge }}</span>
+        <span class="tag">{{ icon('spark') }}{{ t.free }}</span>
+      </div>
+    </div>
+    <div class="hero-visual reveal">
+      <figure class="frame desktop glass"><img src="/static/img/desktop-overview.webp" alt="ASDTrecker — {{ t.shot_overview }}" width="1600" height="1000"></figure>
+      <figure class="frame phone glass"><img src="/static/img/mobile-overview.webp" alt="ASDTrecker Android — {{ t.shot_overview }}" width="640" height="1386"></figure>
+    </div>
+  </section>
+
+  <section class="section" id="features">
+    <div class="heading reveal">
+      <div class="caption">{{ t.features_eyebrow }}</div>
+      <h2>{{ t.features_title }}</h2>
+      <p>{{ t.features_lead }}</p>
+    </div>
+    <div class="feature-grid">
+      {%- for ico, title, text in t.f %}
+      <article class="card glass feature reveal">
+        <span class="feature-icon tone-{{ loop.index0 % 3 }}">{{ icon(ico) }}</span>
+        <h3>{{ title }}</h3>
+        <p>{{ text }}</p>
+      </article>
+      {%- endfor %}
+    </div>
+  </section>
+
+  <section class="section" id="screens">
+    <div class="heading reveal">
+      <div class="caption">{{ t.screens_eyebrow }}</div>
+      <h2>{{ t.screens_title }}</h2>
+      <p>{{ t.screens_lead }}</p>
+    </div>
+    <div class="phones">
+      {%- for file, label in [('mobile-overview', t.shot_overview), ('mobile-plans', t.shot_plans), ('mobile-wallets', t.shot_wallets)] %}
+      <figure class="frame phone glass reveal"><img src="/static/img/{{ file }}.webp" alt="ASDTrecker — {{ label }}" width="640" height="1386" loading="lazy"><figcaption>{{ label }}</figcaption></figure>
+      {%- endfor %}
+    </div>
+    <figure class="frame wide glass reveal"><img src="/static/img/desktop-analytics.webp" alt="ASDTrecker — {{ t.shot_analytics }}" width="1600" height="1000" loading="lazy"><figcaption>{{ t.shot_analytics }}</figcaption></figure>
+  </section>
+
+  <section class="section" id="download">
+    <div class="heading reveal">
+      <div class="caption">{{ t.download_eyebrow }}</div>
+      <h2>{{ t.download_title }}</h2>
+    </div>
+    <div class="download-grid">
+      <article class="card glass hero-card reveal">
+        <div class="card-head"><span class="feature-icon tone-1">{{ icon('phone') }}</span><h3>{{ t.apk_title }}</h3></div>
+        <p class="muted-text">{{ t.apk_text }}</p>
+        <dl class="facts">
+          <div><dt>{{ t.version }}</dt><dd>{{ release.version }}</dd></div>
+          {%- if size %}<div><dt>{{ t.size }}</dt><dd>{{ size }}</dd></div>{% endif %}
+          {%- if published %}<div><dt>{{ t.published }}</dt><dd><time datetime="{{ published }}">{{ published }}</time></dd></div>{% endif %}
+          <div><dt>Android</dt><dd>8.0+</dd></div>
+        </dl>
+        <a class="btn primary big wide" href="/download">{{ icon('download') }}{{ t.download_apk }}</a>
+        {%- if not release.live %}<p class="note">{{ t.offline_note }}</p>{% endif %}
+        <div class="links">
+          {%- if release.sha256_url %}<a href="/download/sha256">{{ t.checksum }}</a>{% endif %}
+          <a href="{{ repo_url }}/releases" target="_blank" rel="noopener">{{ t.all_releases }}</a>
+        </div>
+        <div class="section-divider"></div>
+        <h4>{{ t.install_title }}</h4>
+        <ol class="steps">
+          {%- for step in t.install_steps %}<li>{{ step }}</li>{% endfor %}
+        </ol>
+      </article>
+      <div class="stack">
+        <article class="card glass web-card reveal">
+          <div class="card-head"><span class="feature-icon tone-0">{{ icon('globe') }}</span><h3>{{ t.web_title }}</h3></div>
+          <p class="muted-text">{{ t.web_text }}</p>
+          <a class="url" href="{{ web_url }}" target="_blank" rel="noopener">{{ web_url | replace('https://', '') }}</a>
+          <a class="btn big wide" href="{{ web_url }}" target="_blank" rel="noopener">{{ t.open_now }}{{ icon('external') }}</a>
+        </article>
+        <article class="card glass reveal">
+          <div class="card-head"><span class="feature-icon tone-2">{{ icon('shield') }}</span><h3>{{ t.privacy_title }}</h3></div>
+          <p class="muted-text">{{ t.privacy_text }}</p>
+        </article>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="brand small-brand"><img src="/static/logo.svg" alt="" width="30" height="30"><span>ASD<em>Trecker</em></span></div>
+  <span>{{ t.footer }} · v{{ release.version }}</span>
+  <a href="{{ repo_url }}" target="_blank" rel="noopener">{{ t.source }}</a>
+</footer>
+<script type="module" src="/static/site.js"></script>
+</body>
+</html>

@@ -1,3 +1,4 @@
+import {locale} from './language.js';
 // Animate visible data only, after the navigation reveal. Never change stored amounts.
 export function setupStatMotion(){
  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
@@ -6,13 +7,15 @@ export function setupStatMotion(){
  function stop(){observer?.disconnect();for(const a of animations)a.cancel();animations.clear();for(const f of frames)cancelAnimationFrame(f);frames.clear();for(const [node,text]of originals)node.textContent=text;originals.clear();}
  function animate(node,frames,options={}){const a=node.animate(frames,{duration:850,easing:'cubic-bezier(.22,1,.36,1)',...options});animations.add(a);a.finished.catch(()=>{}).finally(()=>animations.delete(a));}
  function count(node){
-  const text=node.textContent,match=text.match(/^([−-]?\d[\d\s\u00a0\u202f]*(?:[,.]\d+)?)(.*)$/u);
+  const text=node.textContent,match=text.match(/^([−-]?\d[\d\s\u00a0\u202f,.]*)(.*)$/u);
   if(!match)return;
-  const value=Number(match[1].replace(/[\s\u00a0\u202f]/g,'').replace('−','-').replace(',','.'));if(!Number.isFinite(value)||value===0)return;
-  const precision=(match[1].split(/[,.]/)[1]||'').length;
-  const format=new Intl.NumberFormat('ru',{maximumFractionDigits:precision,minimumFractionDigits:precision});
+  const parts=new Intl.NumberFormat(locale()).formatToParts(1234.5),group=parts.find(p=>p.type==='group')?.value||' ',decimal=parts.find(p=>p.type==='decimal')?.value||'.';
+  const raw=match[1].trimEnd(),suffix=match[1].slice(raw.length)+match[2];
+  const value=Number(raw.replaceAll(group,'').replace(/\s/g,'').replace('−','-').replace(decimal,'.'));if(!Number.isFinite(value)||value===0)return;
+  const precision=Math.min(6,(raw.split(decimal)[1]||'').length);
+  const format=new Intl.NumberFormat(locale(),{maximumFractionDigits:precision,minimumFractionDigits:precision});
   originals.set(node,text);node.setAttribute('aria-label',text);const start=performance.now();
-  function tick(now){if(!node.isConnected)return;const p=Math.min(1,(now-start)/800);node.textContent=p===1||disabled()?text:format.format(value*(1-(1-p)**3))+match[2];if(p<1&&!disabled()){const id=requestAnimationFrame(t=>{frames.delete(id);tick(t);});frames.add(id);}}
+  function tick(now){if(!node.isConnected)return;const p=Math.min(1,(now-start)/800);node.textContent=p===1||disabled()?text:format.format(value*(1-(1-p)**3))+suffix;if(p<1&&!disabled()){const id=requestAnimationFrame(t=>{frames.delete(id);tick(t);});frames.add(id);}}
   tick(start);
  }
  function reveal(node){

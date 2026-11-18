@@ -1,11 +1,12 @@
+import {locale} from './language.js';
 import {request} from './cloud.js';
 import {percentage} from './core.js';
 import {fxPollMilliseconds} from './fx-state.js';
 export async function fetchFx(){return request('/api/rates');}
 export function setupFxUI({getState,modal,toast,isDemo,refresh}){
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- const fmt=n=>new Intl.NumberFormat('ru',{maximumFractionDigits:6}).format(n);
- const date=n=>n?new Date(n).toLocaleString('ru'):'ещё не было';
+ const fmt=n=>new Intl.NumberFormat(locale(),{maximumFractionDigits:6}).format(n);
+ const date=n=>n?new Date(n).toLocaleString(locale()):'ещё не было';
  const change=p=>`<span class="${p===null?'muted':p>=0?'positive':'negative'}">${p===null?'—':(p>0?'+':'')+p.toFixed(2)+'%'}</span>`;
  const favorites=['USD','EUR','RUB','KZT','GBP','CNY','AED','JPY','UZS'];
  let query='';
@@ -26,7 +27,7 @@ export function setupFxUI({getState,modal,toast,isDemo,refresh}){
   if(isDemo()){toast('В демо показаны вымышленные курсы');return;}
   query='';modal('Курсы и изменения',`<div id="fx-content"><div id="fx-status">${status()}</div><div class="hero-bottom"><button class="btn primary" data-action="fx-refresh">Обновить сейчас</button></div><div class="field section-space"><label for="fx-search">Найти валюту по коду</label><input id="fx-search" placeholder="Например, USD, UZS или TRY" maxlength="3" autocomplete="off" autocapitalize="characters"></div><div class="section-divider"></div><div id="fx-rows">${rows()}</div><div class="source"><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener">ExchangeRate-API</a><a href="https://currencyapi.com" target="_blank" rel="noopener">CurrencyAPI</a><a href="https://cbu.uz/ru/arkhiv-kursov-valyut/" target="_blank" rel="noopener">ЦБ Узбекистана</a></div></div>`);
  }
- const decorate=()=>{const footer=document.querySelector('main>footer.source');if(footer&&!footer.querySelector('[data-action=fx-open]')){const b=document.createElement('button');b.dataset.action='fx-open';b.className='link-btn';b.textContent='Курсы ↗ и ↘';footer.prepend(b);}if(document.querySelector('#modal-title')?.textContent==='Ваше пространство'&&!document.querySelector('#fx-settings')){const d=document.createElement('div');d.id='fx-settings';d.className='settings-row';d.innerHTML='<div><strong>Курсы и изменения</strong><small>Проценты роста и снижения, дата котировки</small></div><button class="btn small" data-action="fx-open">Смотреть</button>';document.querySelector('.modal-header').after(d);}};
+ const decorate=()=>{const footer=document.querySelector('main>footer.source');if(footer&&!footer.querySelector('[data-action=fx-open]')){const b=document.createElement('button');b.dataset.action='fx-open';b.className='link-btn';b.textContent='Курсы ↗ и ↘';footer.prepend(b);}if(document.querySelector('#modal-title')?.dataset.ruTitle==='Ваше пространство'&&!document.querySelector('#fx-settings')){const d=document.createElement('div');d.id='fx-settings';d.className='settings-row';d.innerHTML='<div><strong>Курсы и изменения</strong><small>Проценты роста и снижения, дата котировки</small></div><button class="btn small" data-action="fx-open">Смотреть</button>';document.querySelector('.modal-header').after(d);}};
  const observer=new MutationObserver(decorate);observer.observe(document.querySelector('#app'),{childList:true});observer.observe(document.querySelector('#modal-root'),{childList:true});decorate();
  document.addEventListener('input',e=>{if(e.target.id==='fx-search'){query=e.target.value.toUpperCase().replace(/[^A-Z]/g,'');document.querySelector('#fx-rows').innerHTML=rows();}});
  let pollTimer;

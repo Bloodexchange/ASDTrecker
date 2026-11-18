@@ -1,3 +1,4 @@
+import {locale} from './language.js';
 export const categories = [
   {id:'food',name:'Еда и продукты',icon:'basket',color:'#6744ad'},
   {id:'cafe',name:'Кафе и рестораны',icon:'cup',color:'#a04770'},
@@ -17,7 +18,7 @@ export const categories = [
 export const today = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
 export const uid = () => crypto.randomUUID();
 export const percentage=(current,previous)=>Number.isFinite(current)&&Number.isFinite(previous)&&previous>0?(current-previous)/previous*100:null;
-export function decimals(currency) { return new Intl.NumberFormat('ru',{style:'currency',currency}).resolvedOptions().maximumFractionDigits; }
+export function decimals(currency) { return new Intl.NumberFormat(locale(),{style:'currency',currency}).resolvedOptions().maximumFractionDigits; }
 export function toMinor(input,currency) {
   const s=String(input).trim().replace(/\s/g,'').replace(',','.');
   if(!/^\d+(\.\d+)?$/.test(s)) throw new Error('Введите положительную сумму');

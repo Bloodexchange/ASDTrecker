@@ -1,3 +1,4 @@
+import {locale} from './language.js';
 import {convertMoneyInput} from './money-input.js';
 import {decimals} from './core.js';
 export function setupAmountPreviews(getState){
@@ -15,7 +16,7 @@ export function setupAmountPreviews(getState){
   let output=document.getElementById(id+'-conversion');if(!output){output=document.createElement('span');output.id=id+'-conversion';output.className='amount-help';output.setAttribute('aria-live','polite');input.after(output);input.setAttribute('aria-describedby',output.id);}
   output.textContent='Можно ввести другую валюту: 100000 сум или 100000 UZS.';
   if(!input.value.trim())continue;
-  try{const r=convertMoneyInput(input.value,currency,currency,s.rates,options);if(r.inputCurrency!==currency)output.textContent='Будет сохранено: '+new Intl.NumberFormat('ru',{maximumFractionDigits:decimals(currency)}).format(r.value)+' '+currency;}
+  try{const r=convertMoneyInput(input.value,currency,currency,s.rates,options);if(r.inputCurrency!==currency)output.textContent='Будет сохранено: '+new Intl.NumberFormat(locale(),{maximumFractionDigits:decimals(currency)}).format(r.value)+' '+currency;}
   catch(e){output.textContent=e.message;}
  }}
  new MutationObserver(update).observe(document.querySelector('#modal-root'),{childList:true});

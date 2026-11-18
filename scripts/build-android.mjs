@@ -12,7 +12,7 @@ function run(exe,args,opts={}){console.log(path.basename(exe),args.filter(x=>!St
 const j=(name,args)=>run(path.join(java,'bin',name+'.exe'),args);
 run(path.join(bin,'aapt2.exe'),['compile','--dir',path.join(main,'res'),'-o',path.join(out,'resources.zip')]);
 run(path.join(bin,'aapt2.exe'),['link','-o',path.join(out,'unsigned.apk'),'-I',platform,'--manifest',path.join(main,'AndroidManifest.xml'),'--java',path.join(out,'gen'),'-A',path.join(root,'web'),'--min-sdk-version','26','--target-sdk-version','35',path.join(out,'resources.zip')]);
-const javaFiles=[path.join(main,'java/com/asdtrecker/app/MainActivity.java'),path.join(out,'gen/com/asdtrecker/app/R.java')];
+const javaFiles=[path.join(main,'java/com/asdtrecker/app/ReminderService.java'),path.join(main,'java/com/asdtrecker/app/MainActivity.java'),path.join(out,'gen/com/asdtrecker/app/R.java')];
 j('javac',['-encoding','UTF-8','--release','8','-classpath',platform,'-d',path.join(out,'classes'),...javaFiles]);
 j('jar',['cf',path.join(out,'classes.jar'),'-C',path.join(out,'classes'),'.']);
 j('java',['-cp',path.join(bin,'lib/d8.jar'),'com.android.tools.r8.D8','--min-api','26','--lib',platform,'--output',path.join(out,'dex'),path.join(out,'classes.jar')]);

@@ -128,13 +128,16 @@ public final class MainActivity extends Activity {
         title.setText("ASDTrecker"); title.setTextSize(30); title.setTextColor(Color.rgb(231,220,244));
         title.setGravity(Gravity.CENTER); cover.addView(title);
         TextView subtitle = new TextView(this);
-        subtitle.setText("Ваше личное финансовое пространство\nПодтвердите вход на устройстве");subtitle.setTextSize(14);subtitle.setTextColor(Color.rgb(166,149,185));subtitle.setGravity(Gravity.CENTER);subtitle.setPadding(0,24,0,40);cover.addView(subtitle);
-        Button button = new Button(this);button.setText("Разблокировать");button.setOnClickListener(v->authenticate());cover.addView(button);
+        subtitle.setText(ReminderService.text(MainActivity.this,"Ваше личное финансовое пространство\nПодтвердите вход на устройстве","Shaxsiy moliyaviy makoningiz\nQurilmada kirishni tasdiqlang","Your personal finances\nConfirm access on this device"));subtitle.setTextSize(14);subtitle.setTextColor(Color.rgb(166,149,185));subtitle.setGravity(Gravity.CENTER);subtitle.setPadding(0,24,0,40);cover.addView(subtitle);
+        Button button = new Button(this);button.setText(ReminderService.text(MainActivity.this,"Разблокировать","Qulfni ochish","Unlock"));button.setOnClickListener(v->authenticate());cover.addView(button);
         root.addView(cover,new FrameLayout.LayoutParams(-1,-1));
         setContentView(root);
+        ReminderService.schedule(this);
     }
     @Override protected void onResume() {
         super.onResume(); web.onResume();
+        ((TextView)cover.getChildAt(1)).setText(ReminderService.text(this,"Ваше личное финансовое пространство\nПодтвердите вход на устройстве","Shaxsiy moliyaviy makoningiz\nQurilmada kirishni tasdiqlang","Your personal finances\nConfirm access on this device"));
+        ((Button)cover.getChildAt(2)).setText(ReminderService.text(this,"Разблокировать","Qulfni ochish","Unlock"));
         if (!unlocked && !authenticating) {
             if (!keyguard.isDeviceSecure()) unlock();
             else authenticate();
@@ -149,7 +152,7 @@ public final class MainActivity extends Activity {
     private void authenticate() {
         if (authenticating) return;
         if (!keyguard.isDeviceSecure()) { unlock(); return; }
-        Intent intent = keyguard.createConfirmDeviceCredentialIntent("ASDTrecker", "Подтвердите вход в личные финансы");
+        Intent intent = keyguard.createConfirmDeviceCredentialIntent("ASDTrecker", ReminderService.text(MainActivity.this,"Подтвердите вход в личные финансы","Shaxsiy moliyaga kirishni tasdiqlang","Confirm access to your finances"));
         if (intent != null) { authenticating = true; startActivityForResult(intent, AUTH); }
     }
     private void unlock() {
@@ -182,7 +185,16 @@ public final class MainActivity extends Activity {
         byte[] data=readBounded(file.openRead());if(data.length<28)throw new IOException();Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.DECRYPT_MODE,key(),new GCMParameterSpec(128,Arrays.copyOfRange(data,0,12)));return new String(cipher.doFinal(Arrays.copyOfRange(data,12,data.length)),StandardCharsets.UTF_8);
     }
     private synchronized boolean writeSecure(AtomicFile file,String text){FileOutputStream out=null;try{Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.ENCRYPT_MODE,key());byte[] encrypted=cipher.doFinal(text.getBytes(StandardCharsets.UTF_8));out=file.startWrite();out.write(cipher.getIV());out.write(encrypted);file.finishWrite(out);return true;}catch(Exception e){if(out!=null)file.failWrite(out);return false;}}
+    @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] grants){
+        super.onRequestPermissionsResult(request,permissions,grants);
+        if(request==104){boolean granted=grants.length>0&&grants[0]==android.content.pm.PackageManager.PERMISSION_GRANTED;ReminderService.prefs(this).edit().putBoolean("reminders",granted).apply();ReminderService.schedule(this);}
+    }
     public final class Bridge {
+        @JavascriptInterface public String getLanguage(){return ReminderService.language(MainActivity.this);}
+        @JavascriptInterface public void setLanguage(String value){if(unlocked&&("ru".equals(value)||"uz".equals(value)||"en".equals(value)))ReminderService.prefs(MainActivity.this).edit().putString("language",value).apply();}
+        @JavascriptInterface public boolean remindersEnabled(){return ReminderService.prefs(MainActivity.this).getBoolean("reminders",false)&&((android.app.NotificationManager)getSystemService(NOTIFICATION_SERVICE)).areNotificationsEnabled();}
+        @JavascriptInterface public void setReminders(boolean enabled){if(!unlocked)return;runOnUiThread(()->{ReminderService.prefs(MainActivity.this).edit().putBoolean("reminders",enabled).apply();ReminderService.channel(MainActivity.this);if(enabled&&android.os.Build.VERSION.SDK_INT>=33&&checkSelfPermission("android.permission.POST_NOTIFICATIONS")!=android.content.pm.PackageManager.PERMISSION_GRANTED){requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"},104);}else{ReminderService.schedule(MainActivity.this);if(enabled&&!((android.app.NotificationManager)getSystemService(NOTIFICATION_SERVICE)).areNotificationsEnabled())startActivity(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,getPackageName()));}});}
+
         @JavascriptInterface public String loadVault() {
             if(!unlocked)return "{\"error\":\"locked\"}";
             synchronized(MainActivity.this){
@@ -215,7 +227,7 @@ public final class MainActivity extends Activity {
             });
         }
         @JavascriptInterface public boolean isDeviceSecure(){return keyguard.isDeviceSecure();}
-        @JavascriptInterface public void lock(){runOnUiThread(()->{unlocked=false;cover.setVisibility(View.VISIBLE);if(keyguard.isDeviceSecure())authenticate();else{Toast.makeText(MainActivity.this,"Настройте PIN или пароль экрана и вернитесь в ASDTrecker",Toast.LENGTH_LONG).show();startActivity(new Intent(Settings.ACTION_SECURITY_SETTINGS));}});}
+        @JavascriptInterface public void lock(){runOnUiThread(()->{unlocked=false;cover.setVisibility(View.VISIBLE);if(keyguard.isDeviceSecure())authenticate();else{Toast.makeText(MainActivity.this,ReminderService.text(MainActivity.this,"Настройте PIN или пароль экрана и вернитесь в ASDTrecker","Ekran PIN yoki parolini sozlab, ASDTrecker ilovasiga qayting","Set a screen PIN or password, then return to ASDTrecker"),Toast.LENGTH_LONG).show();startActivity(new Intent(Settings.ACTION_SECURITY_SETTINGS));}});}
         @JavascriptInterface public void fetchRates(){if(!unlocked)return;io.execute(()->{HttpsURLConnection connection=null;try{connection=(HttpsURLConnection)new URL("https://open.er-api.com/v6/latest/USD").openConnection();connection.setConnectTimeout(8000);connection.setReadTimeout(10000);connection.setInstanceFollowRedirects(false);connection.setRequestMethod("GET");if(connection.getResponseCode()!=200)throw new IOException();String data=new String(readBounded(connection.getInputStream()),StandardCharsets.UTF_8);JSONObject json=new JSONObject(data);if(!"success".equals(json.optString("result"))||!"USD".equals(json.optString("base_code")))throw new IOException();callback("onNativeRates",data);}catch(Exception e){callback("onNativeRates","{\"result\":\"error\"}");}finally{if(connection!=null)connection.disconnect();}});}
         @JavascriptInterface public void exportBackup(String data){if(!unlocked||data==null||data.length()>MAX_BYTES)return;try{if(!new JSONObject(data).optString("format").equals("ASDTrecker-v1"))return;}catch(Exception e){return;}exportText=data;runOnUiThread(()->{Intent i=new Intent(Intent.ACTION_CREATE_DOCUMENT);i.addCategory(Intent.CATEGORY_OPENABLE);i.setType("application/octet-stream");i.putExtra(Intent.EXTRA_TITLE,"ASDTrecker-"+new java.text.SimpleDateFormat("yyyy-MM-dd",java.util.Locale.US).format(new java.util.Date())+".asdt");startActivityForResult(i,EXPORT);});}
         @JavascriptInterface public void pickBackup(){if(!unlocked)return;runOnUiThread(()->{Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT);i.addCategory(Intent.CATEGORY_OPENABLE);i.setType("*/*");startActivityForResult(i,IMPORT);});}
@@ -224,8 +236,8 @@ public final class MainActivity extends Activity {
     @Override protected void onActivityResult(int request,int result,Intent data){
         super.onActivityResult(request,result,data);
         if(request==AUTH){authenticating=false;if(result==RESULT_OK)unlock();else{unlocked=false;cover.setVisibility(View.VISIBLE);/* Avoid immediately reopening after cancellation. */authenticating=true;web.postDelayed(()->authenticating=false,750);}return;}
-        if(request==EXPORT){String payload=exportText;exportText=null;if(result==RESULT_OK&&data!=null&&data.getData()!=null&&payload!=null){Uri uri=data.getData();io.execute(()->{try(OutputStream out=getContentResolver().openOutputStream(uri,"wt")){if(out==null)throw new IOException();out.write(payload.getBytes(StandardCharsets.UTF_8));runOnUiThread(()->Toast.makeText(this,"Зашифрованная копия сохранена",Toast.LENGTH_LONG).show());}catch(Exception e){runOnUiThread(()->Toast.makeText(this,"Не удалось сохранить копию",Toast.LENGTH_LONG).show());}});}return;}
-        if(request==IMPORT&&result==RESULT_OK&&data!=null&&data.getData()!=null){Uri uri=data.getData();io.execute(()->{try{String text=new String(readBounded(getContentResolver().openInputStream(uri)),StandardCharsets.UTF_8);runOnUiThread(()->{if(unlocked)callback("onBackupPicked",text);else pendingImport=text;});}catch(Exception e){runOnUiThread(()->Toast.makeText(this,"Не удалось открыть файл",Toast.LENGTH_LONG).show());}});}
+        if(request==EXPORT){String payload=exportText;exportText=null;if(result==RESULT_OK&&data!=null&&data.getData()!=null&&payload!=null){Uri uri=data.getData();io.execute(()->{try(OutputStream out=getContentResolver().openOutputStream(uri,"wt")){if(out==null)throw new IOException();out.write(payload.getBytes(StandardCharsets.UTF_8));runOnUiThread(()->Toast.makeText(this,ReminderService.text(MainActivity.this,"Зашифрованная копия сохранена","Shifrlangan nusxa saqlandi","Encrypted backup saved"),Toast.LENGTH_LONG).show());}catch(Exception e){runOnUiThread(()->Toast.makeText(this,ReminderService.text(MainActivity.this,"Не удалось сохранить копию","Nusxani saqlab bo‘lmadi","Could not save the backup"),Toast.LENGTH_LONG).show());}});}return;}
+        if(request==IMPORT&&result==RESULT_OK&&data!=null&&data.getData()!=null){Uri uri=data.getData();io.execute(()->{try{String text=new String(readBounded(getContentResolver().openInputStream(uri)),StandardCharsets.UTF_8);runOnUiThread(()->{if(unlocked)callback("onBackupPicked",text);else pendingImport=text;});}catch(Exception e){runOnUiThread(()->Toast.makeText(this,ReminderService.text(MainActivity.this,"Не удалось открыть файл","Faylni ochib bo‘lmadi","Could not open the file"),Toast.LENGTH_LONG).show());}});}
     }
     @Override public void onBackPressed(){if(unlocked&&loaded)web.evaluateJavascript("window.onAndroidBack && window.onAndroidBack()",null);else finish();}
     @Override protected void onDestroy(){io.shutdownNow();web.removeJavascriptInterface("Android");web.destroy();super.onDestroy();}

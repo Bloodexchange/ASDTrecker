@@ -57,3 +57,7 @@ input,select,textarea{border-radius:17px;background:#08121d66;border-color:#6a79
 .heat-cell:hover{transform:translateY(-2px);box-shadow:inset 0 1px 0 #b1bdce44,0 7px 16px #0005}
 .legend-row{padding:7px 9px;margin-bottom:7px;border:1px solid #7893aa20;border-radius:11px;background:linear-gradient(120deg,#32495d30,#1b263b20)}
 .chart-svg .grid{stroke:#8694af24}.chart-bottom{border-top-color:#8293ac29}
+
+/* Crisp background shards; glass surfaces and route zoom remain unchanged. */
+.glass-orbits{display:none}
+#ambient{filter:none;opacity:.95}

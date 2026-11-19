@@ -29,12 +29,12 @@ export function toMinor(input,currency) {
 }
 export const fromMinor=(n,c)=>n/10**decimals(c);
 export function convert(amount,from,to,rates) { if(from===to)return amount; if(!(rates[from]>0&&rates[to]>0))return null; return amount/rates[from]*rates[to]; }
-export const freshState=()=>({version:1,currency:'UZS',transactions:[],accounts:[{id:'cash',name:'Наличные',bank:'Наличные',currency:'UZS',opening:0}],budgets:[],goals:[],rates:{USD:1},ratesAt:0,fetchedAt:0,motion:true,hidden:false});
+export const freshState=()=>({version:1,currency:'UZS',transactions:[],accounts:[{id:'cash',name:'Наличные',bank:'Наличные',currency:'UZS',opening:0}],budgets:[],goals:[],transfers:[],recurring:[],rates:{USD:1},ratesAt:0,fetchedAt:0,motion:true,hidden:false});
 export function transactionValue(t,currency,rates) {
   if(t.currency===currency)return fromMinor(t.amount,t.currency);
   return t.usdValue!==null&&Number.isFinite(t.usdValue)&&rates[currency]>0 ? t.usdValue*rates[currency] : null;
 }
-export function accountBalance(a,transactions) {return a.opening+transactions.filter(t=>t.account===a.id).reduce((n,t)=>n+(t.type==='income'?1:-1)*t.accountAmount,0);}
+export function accountBalance(a,transactions,transfers=[]) {return a.opening+transactions.filter(t=>t.account===a.id).reduce((n,t)=>n+(t.type==='income'?1:-1)*t.accountAmount,0)+(transfers||[]).reduce((n,t)=>n+(t.to===a.id?t.toAmount:0)-(t.from===a.id?t.amount:0),0);}
 export function stats(transactions,currency,rates) {
   let income=0,expense=0,missing=0; const groups={};
   for(const t of transactions) { const v=transactionValue(t,currency,rates); if(v===null){missing++;continue;} if(t.type==='income')income+=v;else{expense+=v;groups[t.category]=(groups[t.category]||0)+v;} }
@@ -54,6 +54,7 @@ export function validateState(s) {
   const cur=x=>typeof x==='string'&&/^[A-Z]{3}$/.test(x);
   const integer=x=>Number.isSafeInteger(x)&&Math.abs(x)<=1e14;
   const date=x=>typeof x==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x)&&!isNaN(Date.parse(x))&&new Date(x).toISOString().slice(0,10)===x;
+  if(s&&typeof s==='object'){if(s.transfers===undefined)s.transfers=[];if(s.recurring===undefined)s.recurring=[];}
   if(!s||s.version!==1||!cur(s.currency)||!Array.isArray(s.transactions)||s.transactions.length>50000||!Array.isArray(s.accounts)||s.accounts.length>100||!s.accounts.length||!Array.isArray(s.budgets)||s.budgets.length>100||!Array.isArray(s.goals)||s.goals.length>100)fail();
   if(new Set(s.accounts.map(a=>a.id)).size!==s.accounts.length)fail();
   for(const a of s.accounts)if(!id(a.id)||!str(a.name,60)||!str(a.bank,60)||!cur(a.currency)||!integer(a.opening))fail();
@@ -61,7 +62,14 @@ export function validateState(s) {
   for(const t of s.transactions){
     if(!id(t.id)||ids.has(t.id)||!['income','expense'].includes(t.type)||!integer(t.amount)||t.amount<=0||!cur(t.currency)||!date(t.date)||!str(t.note)||!categories.some(c=>c.id===t.category&&!!c.income===(t.type==='income'))||!(t.usdValue===null||(Number.isFinite(t.usdValue)&&t.usdValue>=0&&t.usdValue<=1e14))||!integer(t.accountAmount)||t.accountAmount<0||!s.accounts.some(a=>a.id===t.account))fail(); ids.add(t.id);
     if((t.enteredCurrency!==undefined||t.enteredAmount!==undefined)&&(!cur(t.enteredCurrency)||!integer(t.enteredAmount)||t.enteredAmount<=0))fail();
+    if(t.recurring!==undefined&&!id(t.recurring))fail();
   }
+  const note=x=>typeof x==='string'&&x.length<=160;
+  if(!Array.isArray(s.transfers)||s.transfers.length>50000||!Array.isArray(s.recurring)||s.recurring.length>200)fail();
+  const accountIds=new Set(s.accounts.map(a=>a.id)),transferIds=new Set();
+  for(const t of s.transfers){if(!id(t.id)||transferIds.has(t.id)||!accountIds.has(t.from)||!accountIds.has(t.to)||t.from===t.to||!integer(t.amount)||t.amount<=0||!integer(t.toAmount)||t.toAmount<=0||!date(t.date)||!note(t.note))fail();transferIds.add(t.id);}
+  const ruleIds=new Set();
+  for(const r of s.recurring){const account=s.accounts.find(a=>a.id===r.account);if(!id(r.id)||ruleIds.has(r.id)||!['income','expense'].includes(r.type)||!integer(r.amount)||r.amount<=0||!account||r.currency!==account.currency||!categories.some(c=>c.id===r.category&&!!c.income===(r.type==='income'))||!str(r.note)||!['weekly','monthly','yearly'].includes(r.frequency)||!date(r.start)||!Number.isSafeInteger(r.done)||r.done<0||r.done>100000||typeof r.paused!=='boolean')fail();ruleIds.add(r.id);}
   for(const b of s.budgets)if(!id(b.id)||!categories.some(c=>c.id===b.category&&!c.income)||!cur(b.currency)||!integer(b.limit)||b.limit<=0)fail();
   for(const g of s.goals)if(!id(g.id)||!str(g.name,60)||!cur(g.currency)||!integer(g.target)||g.target<=0||!integer(g.saved)||g.saved<0)fail();
   if(new Set(s.budgets.map(b=>b.id)).size!==s.budgets.length||new Set(s.goals.map(g=>g.id)).size!==s.goals.length||new Set(s.budgets.map(b=>b.category)).size!==s.budgets.length)fail();
@@ -79,5 +87,8 @@ export function demoState(){
     if(d===1||d===10){const val=d===1?6500000:1800000;s.transactions.push({id:uid(),type:'income',amount:val*100,currency:'UZS',account:'uzum',accountAmount:val*100,category:d===1?'salary':'freelance',note:d===1?'Зарплата за месяц':'Дизайн-проект',date,usdValue:val/12850});}
   }
   s.budgets=[{id:uid(),category:'food',limit:180000000,currency:'UZS'},{id:uid(),category:'cafe',limit:80000000,currency:'UZS'},{id:uid(),category:'shopping',limit:120000000,currency:'UZS'}];
+  const next=new Date(now.getFullYear(),now.getMonth()+1,1),firstNext=`${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,'0')}-01`,lastDay=new Date(now.getFullYear(),now.getMonth()+1,0).getDate(),subDay=Math.min(lastDay,Math.max(now.getDate()+1,25));
+  s.recurring=[{id:uid(),type:'income',amount:650000000,currency:'UZS',account:'uzum',category:'salary',note:'Зарплата за месяц',frequency:'monthly',start:firstNext,done:0,paused:false},{id:uid(),type:'expense',amount:2900000,currency:'UZS',account:'uzum',category:'subscriptions',note:'Музыкальная подписка',frequency:'monthly',start:`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(subDay).padStart(2,'0')}`,done:0,paused:false}];
+  s.transfers=[{id:uid(),from:'uzum',to:'cash',amount:50000000,toAmount:50000000,date:`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`,note:'Снял наличные'}];
   s.goals=[{id:uid(),name:'Путешествие к морю',target:1800000000,saved:720000000,currency:'UZS'},{id:uid(),name:'Финансовая подушка',target:3000000000,saved:1120000000,currency:'UZS'}];return s;
 }

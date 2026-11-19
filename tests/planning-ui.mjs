@@ -79,6 +79,17 @@ for(const lang of ['en','uz']){
  if(lang==='en')await page.screenshot({path:`${shots}/overview-en.png`,fullPage:true});
  await context.close();
 }
+{ // Browser reminders every 90 minutes after the person allows notifications
+ const {page,context}=await open('ru');
+ await page.evaluate(()=>{window.__notes=[];class N{constructor(t,o){window.__notes.push(o.body);}static permission='default';static async requestPermission(){N.permission='granted';return 'granted';}}window.Notification=N;});
+ await page.locator('.reminder-ask').waitFor();await click(page,'reminders-enable');await page.locator('.reminder-ask').waitFor({state:'detached'});
+ assert.equal(await page.evaluate(()=>localStorage.getItem('asdtrecker.web-reminders')),'1');
+ await page.clock.fastForward('01:00:00');assert.equal(await page.evaluate(()=>window.__notes.length),0);
+ await page.clock.fastForward('00:31:00');const notes=await page.evaluate(()=>window.__notes);assert.equal(notes.length,1);assert.match(notes[0],/[А-Яа-я]/);
+ await page.clock.fastForward('01:31:00');assert.equal(await page.evaluate(()=>window.__notes.length),2);
+ await click(page,'settings');assert.equal(await page.locator('#reminder-toggle').textContent(),'Выключить');
+ await context.close();
+}
 await browser.close();
 assert.deepEqual(errors,[]);
-console.log('PLANNING UI PASS: transfers, recurring catch-up/pause, budget alerts once per level, forecast, history filter, RU/EN/UZ text, 390px layout. No JS errors.');
+console.log('PLANNING UI PASS: transfers, recurring catch-up/pause, budget alerts once per level, forecast, history filter, RU/EN/UZ text, 390px layout, 90-minute browser reminders. No JS errors.');

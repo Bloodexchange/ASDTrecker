@@ -132,7 +132,16 @@ public final class MainActivity extends Activity {
         Button button = new Button(this);button.setText(ReminderService.text(MainActivity.this,"Разблокировать","Qulfni ochish","Unlock"));button.setOnClickListener(v->authenticate());cover.addView(button);
         root.addView(cover,new FrameLayout.LayoutParams(-1,-1));
         setContentView(root);
+        askForNotificationsOnce();
         ReminderService.schedule(this);
+    }
+    /** First launch: turn on the 90-minute reminders and budget alerts and ask Android for the notification permission. */
+    private void askForNotificationsOnce() {
+        android.content.SharedPreferences p=ReminderService.prefs(this);
+        if(p.getBoolean("notificationsAsked",false))return;
+        p.edit().putBoolean("notificationsAsked",true).putBoolean("reminders",true).putBoolean("budgetAlerts",true).apply();
+        ReminderService.channel(this);ReminderService.budgetChannel(this);
+        if(android.os.Build.VERSION.SDK_INT>=33&&checkSelfPermission("android.permission.POST_NOTIFICATIONS")!=android.content.pm.PackageManager.PERMISSION_GRANTED)requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"},106);
     }
     @Override protected void onResume() {
         super.onResume(); web.onResume();
@@ -187,6 +196,7 @@ public final class MainActivity extends Activity {
     private synchronized boolean writeSecure(AtomicFile file,String text){FileOutputStream out=null;try{Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.ENCRYPT_MODE,key());byte[] encrypted=cipher.doFinal(text.getBytes(StandardCharsets.UTF_8));out=file.startWrite();out.write(cipher.getIV());out.write(encrypted);file.finishWrite(out);return true;}catch(Exception e){if(out!=null)file.failWrite(out);return false;}}
     @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] grants){
         super.onRequestPermissionsResult(request,permissions,grants);
+        if(request==106){boolean granted=grants.length>0&&grants[0]==android.content.pm.PackageManager.PERMISSION_GRANTED;ReminderService.prefs(this).edit().putBoolean("reminders",granted).putBoolean("budgetAlerts",granted).apply();ReminderService.schedule(this);}
         if(request==105){boolean granted=grants.length>0&&grants[0]==android.content.pm.PackageManager.PERMISSION_GRANTED;ReminderService.prefs(this).edit().putBoolean("budgetAlerts",granted).apply();}
         if(request==104){boolean granted=grants.length>0&&grants[0]==android.content.pm.PackageManager.PERMISSION_GRANTED;ReminderService.prefs(this).edit().putBoolean("reminders",granted).apply();ReminderService.schedule(this);}
     }

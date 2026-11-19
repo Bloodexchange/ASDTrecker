@@ -95,6 +95,12 @@ export const featureTranslations={
  'Расходы за месяц составят около':{en:'This month’s expenses will be about',uz:'Oylik xarajatlar taxminan'},
  'Темп считается по расходам с начала месяца без регулярных платежей. Переводы между своими счетами не влияют на прогноз.':{en:'The pace is based on spending since the start of the month, excluding recurring payments. Transfers between your own accounts do not affect the forecast.',uz:'Sur’at oy boshidan beri muntazam to‘lovlarsiz xarajatlar bo‘yicha hisoblanadi. O‘z hisoblaringiz orasidagi o‘tkazmalar prognozga ta’sir qilmaydi.'},
  'Часть сумм без курса: прогноз неполный.':{en:'Some amounts have no exchange rate: the forecast is incomplete.',uz:'Ba’zi summalar uchun kurs yo‘q: prognoz to‘liq emas.'},
+ // Reminders every 90 minutes
+ 'Напоминать записывать траты?':{en:'Remind you to log spending?',uz:'Xarajatlarni yozishni eslatib turaylikmi?'},
+ 'Каждые полтора часа ASDTrecker пришлёт уведомление, чтобы вы не забыли внести расходы и доходы. Браузер спросит разрешение.':{en:'Every 90 minutes ASDTrecker will send a notification so you don’t forget to log expenses and income. Your browser will ask for permission.',uz:'Har bir yarim soatda ASDTrecker xarajat va daromadlarni yozishni unutmasligingiz uchun bildirishnoma yuboradi. Brauzer ruxsat so‘raydi.'},
+ 'Разрешить уведомления':{en:'Allow notifications',uz:'Bildirishnomalarga ruxsat berish'},
+ 'Не сейчас':{en:'Not now',uz:'Hozir emas'},
+ 'Напоминания включены: каждые 90 минут, пока вкладка открыта':{en:'Reminders are on: every 90 minutes while the tab is open',uz:'Eslatmalar yoqildi: oyna ochiq ekan, har 90 daqiqada'},
  // Demo data labels
  'Снял наличные':{en:'Cash withdrawal',uz:'Naqd pul yechildi'}
 };
